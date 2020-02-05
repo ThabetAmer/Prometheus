@@ -1,0 +1,57 @@
+groups:
+- name: rabbitmq
+  rules:
+
+  - alert: RabbitmqDown
+    expr: rabbitmq_up == 0
+    for: 5m
+    labels:
+      severity: error
+    annotations:
+      summary: "Rabbitmq down (instance {{ $labels.instance }})"
+      description: "RabbitMQ node down\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
+
+  - alert: TooManyConnections
+    expr: rabbitmq_connectionsTotal > 100
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Too many connections (instance {{ $labels.instance }})"
+      description: "RabbitMQ instance has too many connections (> 1000)\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
+
+  - alert: TooManyMessagesInQueue
+    expr: rabbitmq_queue_messages_ready{queue="my-queue"} > 1000
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Too many messages in queue (instance {{ $labels.instance }})"
+      description: "Queue is filling up (> 1000 msgs)\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
+
+  - alert: SlowQueueConsuming
+    expr: time() - rabbitmq_queue_head_message_timestamp{queue="my-queue"} > 60
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "Slow queue consuming (instance {{ $labels.instance }})"
+      description: "Queue messages are consumed slowly (> 60s)\n  VALUE = {{ $value }}\n  LABELS: {{ $labels }}"
+
+  - alert: NoConsumer
+    expr: rabbitmq_queue_consumers == 0
+    for: 5m
+    labels:
+      severity: error
+    annotations:
+      summary: "No consumer for {{ $labels.queue }}/{{ $labels.vhost }}"
+      description: "Queue {{ $labels.queue }} on {{ $labels.vhost }} has no consumers"
+
+  - alert: TooManyConsumers
+    expr: rabbitmq_queue_consumers > 1
+    for: 5m
+    labels:
+      severity: error
+    annotations:
+      summary: "Too many consumers for {{ $labels.queue }}/{{ $labels.vhost }}"
+      description: "Queue {{ $labels.queue }} on {{ $labels.vhost }} has {{ $value }} consumers"
